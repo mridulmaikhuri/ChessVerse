@@ -47,24 +47,18 @@ function ChessBoard() {
         const piece = document.getElementById(piece_id);
 
         if (piece) {
-            // Get the piece type from the ID
             const pieceType = piece.id;
 
-            // Create a copy of the current board
             const newBoard = [...board];
 
-            // Place the piece on the new square
-            newBoard[r_index][c_index] = pieceType;
-
-            // Clear the original square if a piece was selected
             if (selectedPiece) {
                 newBoard[selectedPiece.rowIndex][selectedPiece.colIndex] = '';
             }
 
-            // Update the board state
+            newBoard[r_index][c_index] = pieceType;
+
             setBoard(newBoard);
 
-            // Reset selectedPiece since the piece has been moved
             setSelectedPiece(null);
         }
     }
