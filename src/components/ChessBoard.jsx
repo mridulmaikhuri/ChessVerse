@@ -15,6 +15,7 @@ function ChessBoard() {
         ['rook-w', 'knight-w', 'bishop-w', 'queen-w', 'king-w', 'bishop-w', 'knight-w', 'rook-w'],
     ]);
 
+    const [turn, setTurn] = React.useState('-w');
     const [selectedPiece, setSelectedPiece] = React.useState(null);
     const files = Array.from({ length: 8 }, (_, index) => String.fromCharCode(65 + index));
     const ranks = Array.from({ length: 8 }, (_, index) => index + 1);
@@ -24,11 +25,12 @@ function ChessBoard() {
             const newBoard = [...board];
             const { piece, rowIndex, colIndex } = selectedPiece;
 
-            if (moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
+            if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
                 setBoard(newBoard);
                 setSelectedPiece(null);
+                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
             } else {
                 setSelectedPiece(null);
             }
@@ -53,7 +55,6 @@ function ChessBoard() {
     };
 
     const handleDragStart = (e, r_index, c_index) => {
-        e.dataTransfer.setData('text', e.target.id);
         e.target.style.opacity = '0.5';
         const piece = board[r_index][c_index];
         setSelectedPiece({ piece, rowIndex: r_index, colIndex: c_index });
@@ -62,26 +63,25 @@ function ChessBoard() {
     const handleDrop = (e, r_index, c_index) => {
         e.preventDefault();
 
-        
+        if (selectedPiece) {
+            const { piece, rowIndex, colIndex } = selectedPiece;
 
-        const piece_id = e.dataTransfer.getData('text');
-        const piece = document.getElementById(piece_id);
-
-        if (piece) {
-            const pieceType = piece.id;
-
-            const newBoard = [...board];
-
-            if (selectedPiece) {
-                newBoard[selectedPiece.rowIndex][selectedPiece.colIndex] = '';
+            if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
+                const newBoard = [...board];
+                newBoard[rowIndex][colIndex] = '';
+                newBoard[r_index][c_index] = piece;
+                setBoard(newBoard);
+                setSelectedPiece(null);
+                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+            } else {
+                setSelectedPiece(null);
             }
-
-            newBoard[r_index][c_index] = pieceType;
-
-            setBoard(newBoard);
-
-            setSelectedPiece(null);
         }
+
+    }
+
+    const handleDragEnd = (e) => {
+        e.target.style.opacity = '1';  
     }
 
     return (
@@ -100,16 +100,16 @@ function ChessBoard() {
                     <div className='w-[80vh] h-[80vh]'>
                         {
                             board.map((row, r_index) => (
-                                <div key={r_index} className='flex'>
+                                <div key={r_index} className='flex cursor-pointer'>
                                     {
                                         row.map((item, c_index) => (
                                             <div
                                                 id={`${r_index}${c_index}`}
                                                 key={c_index}
-                                                className={`w-[10vh] h-[10vh] flex justify-center items-center ${(r_index + c_index) % 2 === 0 ? 'bg-slate-600' : 'bg-slate-800'} cursor-pointer`}
+                                                className={`w-[10vh] h-[10vh] flex justify-center items-center ${(r_index + c_index) % 2 === 0 ? 'bg-slate-600' : 'bg-slate-800'}`}
                                                 onClick={(e) => handleClick(e, r_index, c_index)}
                                                 onDragOver={(e) => e.preventDefault()}
-                                                onDrop={(e) => handleDrop(e, r_index, c_index)} 
+                                                onDrop={(e) => handleDrop(e, r_index, c_index)}
                                             >
                                                 {item !== '' ?
                                                     <Image
@@ -120,6 +120,8 @@ function ChessBoard() {
                                                         id={item}
                                                         className='hover:scale-110'
                                                         onDragStart={(e) => handleDragStart(e, r_index, c_index)}
+                                                        onDragEnd={handleDragEnd}
+                                                        draggable="true"
                                                     />
                                                     : null}
                                             </div>
