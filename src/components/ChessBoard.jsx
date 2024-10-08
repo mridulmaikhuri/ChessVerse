@@ -17,6 +17,7 @@ function ChessBoard() {
 
     const [turn, setTurn] = React.useState('-w');
     const [selectedPiece, setSelectedPiece] = React.useState(null);
+    const [promotionPiece, setPromotionPiece] = React.useState(null);
     const files = Array.from({ length: 8 }, (_, index) => String.fromCharCode(65 + index));
     const ranks = Array.from({ length: 8 }, (_, index) => index + 1);
 
@@ -28,9 +29,15 @@ function ChessBoard() {
             if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
-                setBoard(newBoard);
-                setSelectedPiece(null);
-                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+
+                // Check for promotion
+                if ((piece.includes('-w') && r_index === 0) || (piece.includes('-b') && r_index === 7)) {
+                    setPromotionPiece({ rowIndex: r_index, colIndex: c_index, color: piece.includes('-w') ? '-w' : '-b' });
+                } else {
+                    setBoard(newBoard);
+                    setSelectedPiece(null);
+                    setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+                }
             } else {
                 setSelectedPiece(null);
             }
@@ -39,15 +46,14 @@ function ChessBoard() {
             if ((rowIndex + colIndex) % 2 === 0) {
                 square.style.backgroundColor = 'rgb(71 85 105)';
             } else {
-                square.style.backgroundColor = 'rgb(30 41 59)'
+                square.style.backgroundColor = 'rgb(30 41 59)';
             }
-
         } else if (board[r_index][c_index] !== '') {
             const square = document.getElementById(`${r_index}${c_index}`);
             if ((r_index + c_index) % 2 === 0) {
                 square.style.backgroundColor = 'rgb(100 116 139)';
             } else {
-                square.style.backgroundColor = 'rgb(51 65 85)'
+                square.style.backgroundColor = 'rgb(51 65 85)';
             }
             const piece = board[r_index][c_index];
             setSelectedPiece({ piece, rowIndex: r_index, colIndex: c_index });
@@ -58,7 +64,7 @@ function ChessBoard() {
         e.target.style.opacity = '0.5';
         const piece = board[r_index][c_index];
         setSelectedPiece({ piece, rowIndex: r_index, colIndex: c_index });
-    }
+    };
 
     const handleDrop = (e, r_index, c_index) => {
         e.preventDefault();
@@ -70,19 +76,34 @@ function ChessBoard() {
                 const newBoard = [...board];
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
-                setBoard(newBoard);
-                setSelectedPiece(null);
-                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+
+                // Check for promotion
+                if ((piece.includes('-w') && r_index === 0) || (piece.includes('-b') && r_index === 7)) {
+                    setPromotionPiece({ rowIndex: r_index, colIndex: c_index, color: piece.includes('-w') ? '-w' : '-b' });
+                } else {
+                    setBoard(newBoard);
+                    setSelectedPiece(null);
+                    setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+                }
             } else {
                 setSelectedPiece(null);
             }
         }
-
-    }
+    };
 
     const handleDragEnd = (e) => {
-        e.target.style.opacity = '1';  
-    }
+        e.target.style.opacity = '1';
+    };
+
+    const handlePromotion = (newPiece) => {
+        const { rowIndex, colIndex, color } = promotionPiece;
+        const newBoard = [...board];
+        newBoard[rowIndex][colIndex] = `${newPiece}${color}`;
+        setBoard(newBoard);
+        setSelectedPiece(null);
+        setPromotionPiece(null); 
+        setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+    };
 
     return (
         <div>
@@ -111,7 +132,7 @@ function ChessBoard() {
                                                 onDragOver={(e) => e.preventDefault()}
                                                 onDrop={(e) => handleDrop(e, r_index, c_index)}
                                             >
-                                                {item !== '' ?
+                                                {item !== '' ? 
                                                     <Image
                                                         src={`/pieces-basic-svg/${item}.svg`}
                                                         alt={item}
@@ -142,6 +163,21 @@ function ChessBoard() {
                     </div>
                 </div>
             </div>
+
+            {promotionPiece && (
+                <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                    <div className="bg-white p-4 rounded">
+                        <h2 className="text-lg font-bold">Promote Pawn</h2>
+                        <div className="flex justify-around mt-4">
+                            {['queen', 'rook', 'bishop', 'knight'].map((piece) => (
+                                <button key={piece} onClick={() => handlePromotion(piece)} className="p-2 bg-blue-500 text-white rounded">
+                                    {piece.charAt(0).toUpperCase() + piece.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
