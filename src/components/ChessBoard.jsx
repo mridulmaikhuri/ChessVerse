@@ -77,7 +77,6 @@ function ChessBoard() {
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
 
-                // Check for promotion
                 if ((piece.includes('-w') && r_index === 0) || (piece.includes('-b') && r_index === 7)) {
                     setPromotionPiece({ rowIndex: r_index, colIndex: c_index, color: piece.includes('-w') ? '-w' : '-b' });
                 } else {
@@ -167,12 +166,10 @@ function ChessBoard() {
             {promotionPiece && (
                 <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
                     <div className="bg-white p-4 rounded">
-                        <h2 className="text-lg font-bold">Promote Pawn</h2>
-                        <div className="flex justify-around mt-4">
+                        <h2 className="text-xl font-bold text-black flex justify-center">Promote Pawn</h2>
+                        <div className="flex justify-around mt-4 gap-4">
                             {['queen', 'rook', 'bishop', 'knight'].map((piece) => (
-                                <button key={piece} onClick={() => handlePromotion(piece)} className="p-2 bg-blue-500 text-white rounded">
-                                    {piece.charAt(0).toUpperCase() + piece.slice(1)}
-                                </button>
+                                <Image src = {`/pieces-basic-svg/${piece}${promotionPiece.color}.svg`} alt = {piece} width = {70} height = {70} key={piece} onClick={() => handlePromotion(piece)} className="p-2 cursor-pointer hover:scale-110 border-black border-2 rounded-full hover:bg-blue-400" />
                             ))}
                         </div>
                     </div>
