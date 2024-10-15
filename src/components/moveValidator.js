@@ -5,23 +5,21 @@ export default function moveValidator(from, to, piece, board) {
     if (piece.includes('pawn')) {
         return validatePawnMove(from, to, piece, board);
     } else if (piece.includes('rook')) {
-
+        return validateRookMove(from, to, board, piece);
     } else if (piece.includes('knight')) {
-
+        return validateKnightMove(from, to, board, piece);
     } else if (piece.includes('bishop')) {
-
+        return validateBishopMove(from, to, board, piece);
     } else if (piece.includes('queen')) {
-
+        return validateQueenMove(from, to, board, piece);
     } else if (piece.includes('king')) {
-
+        return validateKingMove(from, to, piece, board);
     }
 
-    return true;
+    return false;
 }
 
 function validatePawnMove(from, to, piece, board) {
-    const [canEnPassant, setCanEnPassant] = React.useState(false);
-
     if (to[0] < 0 || to[0] > 7 || to[1] < 0 || to[1] > 7) {
         return false;
     } else if (board[to[0]][to[1]] !== '') {
@@ -43,18 +41,7 @@ function validatePawnMove(from, to, piece, board) {
         } else {
             const isFirstMove = piece.includes('-w') ? from[0] === 6 : from[0] === 1;
             const dir = piece.includes('-w') ? -1 : 1;
-            
-            if (canEnPssant) {
-                const { flag, dest } = canEnPassant;
 
-                if ((dest[0] === from[0]) && Math.abs(dest[1] - from[1]) === 1) {
-                    if ((to[1] == dest[1]) && (to[0] === dest[0] + dir)) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            }
             if (isFirstMove) {
                 if ((to[0] - from[0]) === dir) {
                     return true;
@@ -62,7 +49,6 @@ function validatePawnMove(from, to, piece, board) {
                     if (board[from[0] + dir][from[1]] !== '') {
                         return false;
                     } else {
-                        setCanEnPassant({ flag: true, to: to })
                         return true;
                     }
                 } else {
@@ -77,4 +63,64 @@ function validatePawnMove(from, to, piece, board) {
             }
         }
     }
+}
+
+function validateRookMove(from, to, board, piece) {
+    if (from[0] !== to[0] && from[1] !== to[1]) {
+        return false; 
+    }
+
+    const [rowStep, colStep] = [Math.sign(to[0] - from[0]), Math.sign(to[1] - from[1])];
+    let [row, col] = [from[0] + rowStep, from[1] + colStep];
+
+    while (row !== to[0] || col !== to[1]) {
+        if (board[row][col] !== '') {
+            return false; 
+        }
+        row += rowStep;
+        col += colStep;
+    }
+
+    return board[to[0]][to[1]].includes(piece.includes('-w') ? '-b' : '-w') || board[to[0]][to[1]] === '';
+}
+
+function validateKnightMove(from, to, board, piece) {
+    const rowDiff = Math.abs(from[0] - to[0]);
+    const colDiff = Math.abs(from[1] - to[1]);
+    if ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) {
+        return board[to[0]][to[1]].includes(piece.includes('-w') ? '-b' : '-w') || board[to[0]][to[1]] === '';
+    } else {
+        return false;
+    }
+}
+
+function validateBishopMove(from, to, board, piece) {
+    if (Math.abs(from[0] - to[0]) !== Math.abs(from[1] - to[1])) {
+        return false; 
+    }
+
+    const rowStep = Math.sign(to[0] - from[0]);
+    const colStep = Math.sign(to[1] - from[1]);
+    let [row, col] = [from[0] + rowStep, from[1] + colStep];
+
+    while (row !== to[0] || col !== to[1]) {
+        if (board[row][col] !== '') {
+            return false;
+        }
+        row += rowStep;
+        col += colStep;
+    }
+
+    return board[to[0]][to[1]].includes(piece.includes('-w') ? '-b' : '-w') || board[to[0]][to[1]] === '';
+}
+
+function validateQueenMove(from, to, board, piece) {
+    return validateRookMove(from, to, board, piece) || validateBishopMove(from, to, board, piece);
+}
+
+function validateKingMove(from, to, piece, board) {
+    const rowDiff = Math.abs(from[0] - to[0]);
+    const colDiff = Math.abs(from[1] - to[1]);
+    return (rowDiff <= 1 && colDiff <= 1) && 
+        (board[to[0]][to[1]].includes(piece.includes('-w') ? '-b' : '-w') || board[to[0]][to[1]] === '');
 }

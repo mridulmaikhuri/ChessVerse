@@ -14,24 +14,54 @@ function ChessBoard() {
         ['pawn-w', 'pawn-w', 'pawn-w', 'pawn-w', 'pawn-w', 'pawn-w', 'pawn-w', 'pawn-w'],
         ['rook-w', 'knight-w', 'bishop-w', 'queen-w', 'king-w', 'bishop-w', 'knight-w', 'rook-w'],
     ]);
-
     const [turn, setTurn] = React.useState('-w');
     const [selectedPiece, setSelectedPiece] = React.useState(null);
     const [promotionPiece, setPromotionPiece] = React.useState(null);
     const files = Array.from({ length: 8 }, (_, index) => String.fromCharCode(65 + index));
     const ranks = Array.from({ length: 8 }, (_, index) => index + 1);
+    const [lastMove, setLastMove] = React.useState(null);
+
+    const checkEnPassant = (r_index, c_index) => {
+        const { piece, rowIndex, colIndex } = selectedPiece;
+
+        if (!piece.includes('pawn') || lastMove === null) return false;
+
+        const {r_index: lastRowIndex, c_index: lastColIndex} = lastMove;
+        if (rowIndex !== lastRowIndex || Math.abs(colIndex - lastColIndex) !== 1) return false;
+
+        const dir = piece.includes('-w') ? -1 : 1;
+
+        if ((c_index !== lastColIndex) && ((r_index - lastRowIndex) !== dir)) {
+            return false;
+        }
+
+        return true;
+    }
 
     const handleClick = (e, r_index, c_index) => {
         if (selectedPiece) {
             const newBoard = [...board];
             const { piece, rowIndex, colIndex } = selectedPiece;
-
-            if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
+            
+            if (piece.includes(turn) && checkEnPassant(r_index, c_index)) {
+                const {r_index: lastRowIndex, c_index: lastColIndex} = lastMove;
+                newBoard[lastRowIndex][lastColIndex] = '';
+                newBoard[rowIndex][colIndex] = '';
+                newBoard[r_index][c_index] = piece;
+                setLastMove(null);
+                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+                setBoard(newBoard);
+            } else if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
 
-                // Check for promotion
-                if ((piece.includes('-w') && r_index === 0) || (piece.includes('-b') && r_index === 7)) {
+                if ((piece.includes('pawn')) && (Math.abs(r_index - rowIndex) === 2)) {
+                    setLastMove({r_index, c_index});
+                } else {
+                    setLastMove(null);
+                }
+
+                if (((piece === 'pawn-w') && (r_index === 0)) || ((piece === 'pawn-b') && (r_index === 7))) {
                     setPromotionPiece({ rowIndex: r_index, colIndex: c_index, color: piece.includes('-w') ? '-w' : '-b' });
                 } else {
                     setBoard(newBoard);
@@ -61,6 +91,14 @@ function ChessBoard() {
     };
 
     const handleDragStart = (e, r_index, c_index) => {
+        if (selectedPiece) {
+            const square = document.getElementById(`${r_index}${c_index}`);
+            if ((r_index + c_index) % 2 === 0) {
+                square.style.backgroundColor = 'rgb(71 85 105)';
+            } else {
+                square.style.backgroundColor = 'rgb(30 41 59)';
+            }
+        }
         e.target.style.opacity = '0.5';
         const piece = board[r_index][c_index];
         setSelectedPiece({ piece, rowIndex: r_index, colIndex: c_index });
@@ -71,13 +109,27 @@ function ChessBoard() {
 
         if (selectedPiece) {
             const { piece, rowIndex, colIndex } = selectedPiece;
+            const newBoard = [...board];
 
-            if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
-                const newBoard = [...board];
+            if (piece.includes(turn) && checkEnPassant(r_index, c_index)) {
+                const {r_index: lastRowIndex, c_index: lastColIndex} = lastMove;
+                newBoard[lastRowIndex][lastColIndex] = '';
+                newBoard[rowIndex][colIndex] = '';
+                newBoard[r_index][c_index] = piece;
+                setLastMove(null);
+                setTurn((turn) => (turn === '-w' ? '-b' : '-w'));
+                setBoard(newBoard);
+            } else if (piece.includes(turn) && moveValidator([rowIndex, colIndex], [r_index, c_index], piece, board)) {
                 newBoard[rowIndex][colIndex] = '';
                 newBoard[r_index][c_index] = piece;
 
-                if ((piece.includes('-w') && r_index === 0) || (piece.includes('-b') && r_index === 7)) {
+                if ((piece.includes('pawn')) && (Math.abs(r_index - rowIndex) === 2)) {
+                    setLastMove({r_index, c_index});
+                } else {
+                    setLastMove(null);
+                }
+
+                if (((piece === 'pawn-w') && (r_index === 0)) || ((piece === 'pawn-b') && (r_index === 7))) {
                     setPromotionPiece({ rowIndex: r_index, colIndex: c_index, color: piece.includes('-w') ? '-w' : '-b' });
                 } else {
                     setBoard(newBoard);
